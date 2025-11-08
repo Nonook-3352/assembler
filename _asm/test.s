@@ -1,0 +1,4 @@
+NOP
+ADD a2, 2, zero
+
+ADD 0xFF, 0b11111111, 1, x31
