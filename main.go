@@ -11,6 +11,8 @@ type TokenValue string
 
 type OptionalType uint8
 
+type InstrFormat uint8
+
 const (
 	INSTRUCTION TokenType = iota
 	OPERAND
@@ -27,6 +29,15 @@ const (
 	UNDEFINED
 )
 
+const (
+	RTYPE  InstrFormat = iota // Maybe draw the bit fields
+	ITYPE                     //
+	STYPE                     //
+	SBTYPE                    //
+	UTYPE                     //
+	UJTYPE                    //
+)
+
 var registerABI []string = []string{
 	"zero",           //x0
 	"ra",             //x1
@@ -40,6 +51,18 @@ var registerABI []string = []string{
 	"a2", "a3", "a4", "a5", "a6", "a7", //x12-x17
 	"s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", //x18-x27
 	"t3", "t4", "t5", "t6", //x28-31
+}
+
+type Instruction struct {
+	format InstrFormat
+	opcode uint32 // 7 bit
+	funct3 uint32 // 3 bit
+	funct7 uint32 // 7 bit
+}
+
+var instrMap map[string]Instruction = map[string]Instruction{
+	"ADD": Instruction{format: RTYPE, opcode: 0b011_0011, funct3: 0b000, funct7: 0b000_0000},
+	"SUB": Instruction{format: RTYPE, opcode: 0b011_0011, funct3: 0b000, funct7: 0b011_0000},
 }
 
 type Token struct {
@@ -58,6 +81,17 @@ type Line struct {
 type TokenLine struct {
 	tokens  []Token
 	filePos uint
+}
+
+func encodeRType(opcode, rd, funct3, rs1, rs2, funct7 uint32) uint32 {
+	var inst uint32
+	inst |= opcode
+	inst |= rd << 7
+	inst |= funct3 << 12
+	inst |= rs1 << 15
+	inst |= rs2 << 20
+	inst |= funct7 << 25
+	return inst
 }
 
 func contains[T comparable](slice []T, item T) bool {
