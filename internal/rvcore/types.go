@@ -16,7 +16,8 @@ const (
 )
 
 const (
-	IMMEDIATEINT OptionalType = iota
+	PLACEHOLDER OptionalType = iota
+	IMMEDIATEINT
 	IMMEDIATEHEX
 	IMMEDIATEBYT
 	REGISTER
