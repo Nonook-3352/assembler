@@ -1,7 +1,7 @@
 package main
 
 import (
-	"assembler/internal/lexer"
+	"assembler/internal/rvcore"
 	"bufio"
 	"fmt"
 	"os"
@@ -17,7 +17,7 @@ func main() {
 	scanner := bufio.NewScanner(f)
 	currentLine := 1
 	for scanner.Scan() {
-		tokens := lexer.Line{Value: scanner.Text(), Len: uint16(len(scanner.Text())), FilePos: uint(currentLine)}.LexeLine()
+		tokens := rvcore.Line{Value: scanner.Text(), Len: uint16(len(scanner.Text())), FilePos: uint(currentLine)}.LexeLine()
 		tokens = tokens.RefineTokens()
 		fmt.Printf("%+v\n", tokens)
 		currentLine++

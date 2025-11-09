@@ -1,27 +1,8 @@
-package lexer
+package rvcore
 
 import (
-	. "assembler/internal/types"
 	"fmt"
 )
-
-type Token struct {
-	TokenType    TokenType
-	OptionalType OptionalType
-	Value        TokenValue
-}
-
-type Line struct {
-	Value   string
-	pos     uint16
-	Len     uint16
-	FilePos uint
-}
-
-type TokenLine struct {
-	Tokens  []Token
-	FilePos uint
-}
 
 var registerABI []string = []string{
 	"zero",           //x0

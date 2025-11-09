@@ -1,4 +1,4 @@
-package types
+package rvcore
 
 type TokenType uint8
 type TokenValue string
@@ -31,3 +31,28 @@ const (
 	UTYPE                     //
 	UJTYPE                    //
 )
+
+type Token struct {
+	TokenType    TokenType
+	OptionalType OptionalType
+	Value        TokenValue
+}
+
+type Line struct {
+	Value   string
+	pos     uint16
+	Len     uint16
+	FilePos uint
+}
+
+type TokenLine struct {
+	Tokens  []Token
+	FilePos uint
+}
+
+type Instruction struct {
+	Format InstrFormat
+	Opcode uint32 // 7 bit
+	Funct3 uint32 // 3 bit
+	Funct7 uint32 // 7 bit
+}

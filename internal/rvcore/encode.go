@@ -1,4 +1,4 @@
-package encoder
+package rvcore
 
 func EncodeRType(opcode, rd, funct3, rs1, rs2, funct7 uint32) uint32 {
 	var inst uint32
