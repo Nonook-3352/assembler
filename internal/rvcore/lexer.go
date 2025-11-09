@@ -54,22 +54,47 @@ func (line Line) LexeLine() TokenLine {
 		return TokenLine{}
 	}
 
-	instr := line.readWord()
-	if instr != "" {
-		tokens.Tokens = append(tokens.Tokens, Token{TokenType: INSTRUCTION, Value: instr})
+	if line.Len == 0 {
+		return TokenLine{}
 	}
 
-	for line.pos < line.Len {
-		line.skipWhitespace()
-		if line.pos < line.Len && line.Value[line.pos] == ',' {
-			tokens.Tokens = append(tokens.Tokens, Token{TokenType: COMMA, Value: ","})
-			line.pos++
-			continue
+	switch line.Value[line.pos] {
+	case '.':
+		directive := line.readWord()
+		tokens.Tokens = append(tokens.Tokens, Token{TokenType: DIRECTIVE, Value: directive})
+
+		for line.pos < line.Len {
+			line.skipWhitespace()
+			if line.pos < line.Len && line.Value[line.pos] == ',' {
+				tokens.Tokens = append(tokens.Tokens, Token{TokenType: COMMA, Value: ","})
+				line.pos++
+				continue
+			}
+
+			operand := line.readWord()
+			if operand != "" {
+				tokens.Tokens = append(tokens.Tokens, Token{TokenType: OPERAND, Value: operand})
+			}
 		}
 
-		operand := line.readWord()
-		if operand != "" {
-			tokens.Tokens = append(tokens.Tokens, Token{TokenType: OPERAND, Value: operand})
+	default:
+		instr := line.readWord()
+		if instr != "" {
+			tokens.Tokens = append(tokens.Tokens, Token{TokenType: INSTRUCTION, Value: instr})
+		}
+
+		for line.pos < line.Len {
+			line.skipWhitespace()
+			if line.pos < line.Len && line.Value[line.pos] == ',' {
+				tokens.Tokens = append(tokens.Tokens, Token{TokenType: COMMA, Value: ","})
+				line.pos++
+				continue
+			}
+
+			operand := line.readWord()
+			if operand != "" {
+				tokens.Tokens = append(tokens.Tokens, Token{TokenType: OPERAND, Value: operand})
+			}
 		}
 	}
 
@@ -87,6 +112,7 @@ func (tokens TokenLine) RefineTokens() TokenLine {
 			} else if tokens.Tokens[index+1].TokenType != OPERAND {
 				panic(fmt.Sprintf("Found no operand after a comma (Line: %d Token: %d, After: %+v)", tokens.FilePos, index, tokens.Tokens[index+1].Value))
 			}
+			token.OptionalType = UNDEFINED
 			//fmt.Printf("%+v (%d) passed\n", token, index)
 
 		case OPERAND:
@@ -111,6 +137,17 @@ func (tokens TokenLine) RefineTokens() TokenLine {
 				token.OptionalType = UNDEFINED
 			}
 
+		case DIRECTIVE:
+			token.OptionalType = UNDEFINED
+			if token.Value == ".arch" {
+				if len(tokens.Tokens) > index+1 {
+					if tokens.Tokens[index+1].Value != "RISCV32I" {
+						panic(fmt.Sprintf("Unsupported architecture %s (Line: %d)", tokens.Tokens[index+1].Value, tokens.FilePos))
+					}
+				}
+			}
+		case INSTRUCTION:
+			token.OptionalType = UNDEFINED
 		default:
 			//fmt.Printf("%+v (%d) passed\n", token, index)
 		}
