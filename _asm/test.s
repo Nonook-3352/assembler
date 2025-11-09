@@ -1,3 +1,5 @@
+.arch RISCV32I
+
 NOP
 ADD a2, 2, zero
 

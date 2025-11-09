@@ -1,0 +1,140 @@
+package lexer
+
+import (
+	. "assembler/internal/types"
+	"fmt"
+)
+
+type Token struct {
+	TokenType    TokenType
+	OptionalType OptionalType
+	Value        TokenValue
+}
+
+type Line struct {
+	Value   string
+	pos     uint16
+	Len     uint16
+	FilePos uint
+}
+
+type TokenLine struct {
+	Tokens  []Token
+	FilePos uint
+}
+
+var registerABI []string = []string{
+	"zero",           //x0
+	"ra",             //x1
+	"sp",             //x2
+	"gp",             //x3
+	"tp",             //x4
+	"t0", "t1", "t2", //x5-7
+	"so", "fp", //x8
+	"s1",       //x9
+	"a0", "a1", //x10-11
+	"a2", "a3", "a4", "a5", "a6", "a7", //x12-x17
+	"s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", //x18-x27
+	"t3", "t4", "t5", "t6", //x28-31
+}
+
+func contains[T comparable](slice []T, item T) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+func (line *Line) skipWhitespace() {
+	for line.pos < line.Len && (line.Value[line.pos] == ' ' || line.Value[line.pos] == '\t') {
+		line.pos++
+	}
+}
+
+func (line *Line) readWord() TokenValue {
+	wordStart := line.pos
+	for line.pos < line.Len && (line.Value[line.pos] != ' ' && line.Value[line.pos] != ',') {
+		line.pos++
+	}
+
+	return TokenValue(line.Value[wordStart:line.pos])
+}
+
+func (line Line) LexeLine() TokenLine {
+	tokens := TokenLine{
+		Tokens:  make([]Token, 0, 16),
+		FilePos: line.FilePos,
+	}
+
+	line.skipWhitespace()
+	if line.pos > line.Len {
+		return TokenLine{}
+	}
+
+	instr := line.readWord()
+	if instr != "" {
+		tokens.Tokens = append(tokens.Tokens, Token{TokenType: INSTRUCTION, Value: instr})
+	}
+
+	for line.pos < line.Len {
+		line.skipWhitespace()
+		if line.pos < line.Len && line.Value[line.pos] == ',' {
+			tokens.Tokens = append(tokens.Tokens, Token{TokenType: COMMA, Value: ","})
+			line.pos++
+			continue
+		}
+
+		operand := line.readWord()
+		if operand != "" {
+			tokens.Tokens = append(tokens.Tokens, Token{TokenType: OPERAND, Value: operand})
+		}
+	}
+
+	return tokens
+
+}
+
+func (tokens TokenLine) RefineTokens() TokenLine {
+	for index := range tokens.Tokens {
+		token := &tokens.Tokens[index] //Actually modify the token and not just a copy of it.
+		switch token.TokenType {
+		case COMMA:
+			if index == len(tokens.Tokens)-1 {
+				panic(fmt.Sprintf("Found no operand after a comma (Line: %d Token: %d, After: %+v)", tokens.FilePos, index, "End of line"))
+			} else if tokens.Tokens[index+1].TokenType != OPERAND {
+				panic(fmt.Sprintf("Found no operand after a comma (Line: %d Token: %d, After: %+v)", tokens.FilePos, index, tokens.Tokens[index+1].Value))
+			}
+			//fmt.Printf("%+v (%d) passed\n", token, index)
+
+		case OPERAND:
+			if len(token.Value) < 2 {
+				token.OptionalType = UNDEFINED
+				continue
+			}
+
+			if contains(registerABI, string(token.Value)) {
+				token.OptionalType = REGISTER
+				continue
+			}
+
+			switch {
+			case token.Value[:2] == "0x":
+				token.OptionalType = IMMEDIATEHEX
+			case token.Value[:2] == "0b":
+				token.OptionalType = IMMEDIATEBYT
+			case token.Value[:1] == "x":
+				token.OptionalType = REGISTER
+			default:
+				token.OptionalType = UNDEFINED
+			}
+
+		default:
+			//fmt.Printf("%+v (%d) passed\n", token, index)
+		}
+
+	}
+
+	return tokens
+}
