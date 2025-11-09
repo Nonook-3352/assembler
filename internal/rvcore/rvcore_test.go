@@ -46,11 +46,11 @@ func TestEncodeUJType(t *testing.T) {
 
 func TestContains(t *testing.T) {
 	slice := []string{"a", "b", "c", "d"}
-	if !contains(slice, "c") {
+	if !Contains(slice, "c") {
 		t.Errorf("slice does contain c but got false")
 	}
 
-	if contains(slice, "e") {
+	if Contains(slice, "e") {
 		t.Errorf("slice does not contain e but got true")
 	}
 }
@@ -58,7 +58,10 @@ func TestContains(t *testing.T) {
 func TestLexeLineAndRefineTokens(t *testing.T) {
 	line := Line{Value: "  ADDI a0, x14, 10, 0xF1, 0b11001, 1 ", Len: uint16(len("  ADDI a0, a1, 10, 0xF1, 0b11001, 1 ")), FilePos: 1}
 	tokens := line.LexeLine()
-	tokens = tokens.RefineTokens()
+	err, tokens := tokens.RefineTokens()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if len(tokens.Tokens) != 12 {
 		t.Errorf("want 12 tokens but got %d", len(tokens.Tokens))
 	}
@@ -84,7 +87,10 @@ func TestLexeLineAndRefineTokens(t *testing.T) {
 
 	line2 := Line{Value: ".arch RISCV32I", Len: uint16(len(".arch RISCV32I")), FilePos: 2}
 	tokens2 := line2.LexeLine()
-	tokens2 = tokens2.RefineTokens()
+	err, tokens2 = tokens2.RefineTokens()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if len(tokens2.Tokens) != 2 {
 		t.Errorf("want 2 tokens but got %d", len(tokens2.Tokens))
 	}
@@ -100,9 +106,18 @@ func TestLexeLineAndRefineTokens(t *testing.T) {
 
 	line3 := Line{Value: "", Len: 0, FilePos: 3}
 	tokens3 := line3.LexeLine()
-	tokens3 = tokens3.RefineTokens()
+	err, tokens3 = tokens3.RefineTokens()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	if len(tokens3.Tokens) != 0 {
 		t.Errorf("want 0 tokens but got %d", len(tokens3.Tokens))
 	}
 
+	line4 := Line{Value: "ADDI a0, , x14", Len: uint16(len("ADDI a0, , x14")), FilePos: 4}
+	tokens4 := line4.LexeLine()
+	err, _ = tokens4.RefineTokens()
+	if err == nil {
+		t.Errorf("expected error but got nil")
+	}
 }

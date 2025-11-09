@@ -1,9 +1,5 @@
 package rvcore
 
-import (
-	"fmt"
-)
-
 var registerABI []string = []string{
 	"zero",           //x0
 	"ra",             //x1
@@ -19,7 +15,7 @@ var registerABI []string = []string{
 	"t3", "t4", "t5", "t6", //x28-31
 }
 
-func contains[T comparable](slice []T, item T) bool {
+func Contains[T comparable](slice []T, item T) bool {
 	for _, v := range slice {
 		if v == item {
 			return true
@@ -102,15 +98,23 @@ func (line Line) LexeLine() TokenLine {
 
 }
 
-func (tokens TokenLine) RefineTokens() TokenLine {
+func (tokens TokenLine) RefineTokens() (error, TokenLine) {
 	for index := range tokens.Tokens {
 		token := &tokens.Tokens[index] //Actually modify the token and not just a copy of it.
 		switch token.TokenType {
 		case COMMA:
 			if index == len(tokens.Tokens)-1 {
-				panic(fmt.Sprintf("Found no operand after a comma (Line: %d Token: %d, After: %+v)", tokens.FilePos, index, "End of line"))
+				return ParseError{
+					Line:    tokens.FilePos,
+					Token:   uint(index),
+					Message: "Found no operand after a comma and reached end of line",
+				}, TokenLine{}
 			} else if tokens.Tokens[index+1].TokenType != OPERAND {
-				panic(fmt.Sprintf("Found no operand after a comma (Line: %d Token: %d, After: %+v)", tokens.FilePos, index, tokens.Tokens[index+1].Value))
+				return ParseError{
+					Line:    tokens.FilePos,
+					Token:   uint(index),
+					Message: "Found no operand after a comma",
+				}, TokenLine{}
 			}
 			token.OptionalType = UNDEFINED
 			//fmt.Printf("%+v (%d) passed\n", token, index)
@@ -121,7 +125,7 @@ func (tokens TokenLine) RefineTokens() TokenLine {
 				continue
 			}
 
-			if contains(registerABI, string(token.Value)) {
+			if Contains(registerABI, string(token.Value)) {
 				token.OptionalType = REGISTER
 				continue
 			}
@@ -142,7 +146,11 @@ func (tokens TokenLine) RefineTokens() TokenLine {
 			if token.Value == ".arch" {
 				if len(tokens.Tokens) > index+1 {
 					if tokens.Tokens[index+1].Value != "RISCV32I" {
-						panic(fmt.Sprintf("Unsupported architecture %s (Line: %d)", tokens.Tokens[index+1].Value, tokens.FilePos))
+						return ParseError{
+							Line:    tokens.FilePos,
+							Token:   uint(index + 1),
+							Message: "Only .arch RISCV32I is supported",
+						}, TokenLine{}
 					}
 				}
 			}
@@ -154,5 +162,5 @@ func (tokens TokenLine) RefineTokens() TokenLine {
 
 	}
 
-	return tokens
+	return nil, tokens
 }

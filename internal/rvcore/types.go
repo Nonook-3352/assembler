@@ -1,5 +1,7 @@
 package rvcore
 
+import "fmt"
+
 type TokenType uint8
 type TokenValue string
 
@@ -56,4 +58,14 @@ type Instruction struct {
 	Opcode uint32 // 7 bit
 	Funct3 uint32 // 3 bit
 	Funct7 uint32 // 7 bit
+}
+
+type ParseError struct {
+	Line    uint
+	Token   uint
+	Message string
+}
+
+func (e ParseError) Error() string {
+	return fmt.Sprintf("Line %d, Token %d: %s", e.Line, e.Token, e.Message)
 }
