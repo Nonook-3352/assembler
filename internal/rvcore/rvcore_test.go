@@ -122,4 +122,31 @@ func TestLexeLineAndRefineTokens(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error but got nil")
 	}
+
+	line5 := Line{Value: ".arch aarch64", Len: uint16(len(".arch aarch64")), FilePos: 4}
+	tokens5 := line5.LexeLine()
+	_, err = tokens5.RefineTokens()
+	if err == nil {
+		t.Errorf("expected error but got nil")
+	}
+}
+
+func TestEmitAsmLine(t *testing.T) {
+	tokens := TokenLine{
+		Tokens: []Token{{TokenType: INSTRUCTION, OptionalType: UNDEFINED, Value: "add"},
+			{TokenType: OPERAND, OptionalType: REGISTER, Value: "a2"},
+			{TokenType: COMMA, OptionalType: UNDEFINED, Value: ","},
+			{TokenType: OPERAND, OptionalType: REGISTER, Value: "x2"},
+			{TokenType: COMMA, OptionalType: UNDEFINED, Value: ","},
+			{TokenType: OPERAND, OptionalType: REGISTER, Value: "zero"}},
+		FilePos: 0,
+	}
+
+	result := tokens.EmitAsmLine() //add a2, x2, zero
+	expected := 0b00000000000000010000011000110011
+
+	if result != uint32(expected) {
+		t.Errorf("Want %032b but got %032b", expected, result)
+	}
+
 }
