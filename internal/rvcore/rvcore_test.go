@@ -68,7 +68,7 @@ func TestLexeLineAndRefineTokens(t *testing.T) {
 		t.Errorf("want 12 tokens but got %d", len(tokens.Tokens))
 	}
 	expectedTokens := []Token{
-		{TokenType: INSTRUCTION, Value: "ADDI", OptionalType: UNDEFINED},
+		{TokenType: INSTRUCTION, Value: "addi", OptionalType: UNDEFINED},
 		{TokenType: OPERAND, Value: "a0", OptionalType: REGISTER},
 		{TokenType: COMMA, Value: ",", OptionalType: UNDEFINED},
 		{TokenType: OPERAND, Value: "x14", OptionalType: REGISTER},
