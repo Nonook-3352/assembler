@@ -1,6 +1,9 @@
 package rvcore
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 var registerABI []string = []string{
 	"zero",           //x0
@@ -177,9 +180,9 @@ func (tokens TokenLine) RefineTokens() (TokenLine, error) {
 	return tokens, nil
 }
 
-func (tokens TokenLine) Decode() DecodedTokenLine {
+func (tokens TokenLine) Decode() (DecodedTokenLine, error) {
 	if len(tokens.Tokens) == 0 {
-		return DecodedTokenLine{}
+		return DecodedTokenLine{}, nil
 	}
 	lineFormat := instrMap[string(tokens.Tokens[0].Value)].Format
 	instr := string(tokens.Tokens[0].Value)
@@ -198,8 +201,16 @@ func (tokens TokenLine) Decode() DecodedTokenLine {
 			Rs1:     regMap[string(tokens.Tokens[2].Value)],
 			Rs2:     regMap[string(tokens.Tokens[3].Value)],
 			FilePos: tokens.FilePos,
-		}
+		}, nil
+	case ITYPE:
+		imm, err := strconv.ParseInt(string(tokens.Tokens[3].Value), 0, 0)
+		return DecodedTokenLine{
+			Type:  ITYPE,
+			Instr: instr,
+			Rd:    regMap[string(tokens.Tokens[1].Value)],
+			Rs1:   regMap[string(tokens.Tokens[2].Value)],
+			Imm:   uint32(imm),
+		}, err
 	}
-
-	return DecodedTokenLine{}
+	return DecodedTokenLine{}, nil
 }

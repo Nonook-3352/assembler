@@ -29,7 +29,10 @@ func main() {
 	for scanner.Scan() {
 		tokens := rvcore.Line{Value: scanner.Text(), Len: uint16(len(scanner.Text())), FilePos: uint(currentLine)}.LexeLine()
 		tokens, err := tokens.RefineTokens()
-		decoded := tokens.Decode()
+		decoded, err := tokens.Decode()
+		if err != nil {
+			panic(err)
+		}
 		output := decoded.EmitAsmLine()
 		if err != nil {
 			fmt.Println(err.Error())

@@ -131,7 +131,7 @@ func TestLexeLineAndRefineTokens(t *testing.T) {
 	}
 }
 
-func TestEmitAsmLine(t *testing.T) {
+func TestEmitAsmLineRTYPE(t *testing.T) {
 	tokens := TokenLine{
 		Tokens: []Token{{TokenType: INSTRUCTION, OptionalType: UNDEFINED, Value: "add"},
 			{TokenType: OPERAND, OptionalType: REGISTER, Value: "a2"},
@@ -142,9 +142,36 @@ func TestEmitAsmLine(t *testing.T) {
 		FilePos: 0,
 	}
 
-	decoded := tokens.Decode() //add a2, x2, zero
+	decoded, err := tokens.Decode() //add a2, x2, zero
+	if err != nil {
+		t.Errorf("got error when Decoding")
+	}
 	result := decoded.EmitAsmLine()
 	expected := 0b00000000000000010000011000110011
+
+	if result != uint32(expected) {
+		t.Errorf("Want %032b but got %032b", expected, result)
+	}
+
+}
+
+func TestEmitAsmLineITYPE(t *testing.T) {
+	tokens := TokenLine{
+		Tokens: []Token{{TokenType: INSTRUCTION, OptionalType: UNDEFINED, Value: "addi"},
+			{TokenType: OPERAND, OptionalType: REGISTER, Value: "x7"},
+			{TokenType: COMMA, OptionalType: UNDEFINED, Value: ","},
+			{TokenType: OPERAND, OptionalType: REGISTER, Value: "x0"},
+			{TokenType: COMMA, OptionalType: UNDEFINED, Value: ","},
+			{TokenType: OPERAND, OptionalType: IMMEDIATEBYT, Value: "0b1101"}},
+		FilePos: 0,
+	}
+
+	decoded, err := tokens.Decode() // addi x7, x0, 0b1101
+	if err != nil {
+		t.Errorf("got error when Decoding")
+	}
+	result := decoded.EmitAsmLine()
+	expected := 0b00000000110100000000001110010011
 
 	if result != uint32(expected) {
 		t.Errorf("Want %032b but got %032b", expected, result)
