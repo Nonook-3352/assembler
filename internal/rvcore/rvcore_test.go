@@ -142,7 +142,8 @@ func TestEmitAsmLine(t *testing.T) {
 		FilePos: 0,
 	}
 
-	result := tokens.EmitAsmLine() //add a2, x2, zero
+	decoded := tokens.Decode() //add a2, x2, zero
+	result := decoded.EmitAsmLine()
 	expected := 0b00000000000000010000011000110011
 
 	if result != uint32(expected) {

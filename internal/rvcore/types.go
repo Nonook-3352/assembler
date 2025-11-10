@@ -9,6 +9,7 @@ type OptionalType uint8
 
 type InstrFormat uint8
 
+//go:generate stringer -type=TokenType,OptionalType,InstrFormat
 const (
 	INSTRUCTION TokenType = iota
 	OPERAND
@@ -86,6 +87,17 @@ type Line struct {
 
 type TokenLine struct {
 	Tokens  []Token
+	FilePos uint
+}
+
+type DecodedTokenLine struct {
+	Type    InstrFormat
+	Instr   string
+	Rd      uint32
+	Rs1     uint32
+	Rs2     uint32
+	Imm     uint32
+	Label   uint32
 	FilePos uint
 }
 

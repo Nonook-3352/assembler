@@ -17,6 +17,15 @@ var registerABI []string = []string{
 	"t3", "t4", "t5", "t6", //x28-31
 }
 
+func Delete[T any](slice []T, index int) []T {
+	if len(slice) < index {
+		return slice
+	}
+
+	slice = append(slice[:index], slice[index+1:]...)
+	return slice
+}
+
 func Contains[T comparable](slice []T, item T) bool {
 	for _, v := range slice {
 		if v == item {
@@ -166,4 +175,31 @@ func (tokens TokenLine) RefineTokens() (TokenLine, error) {
 	}
 
 	return tokens, nil
+}
+
+func (tokens TokenLine) Decode() DecodedTokenLine {
+	if len(tokens.Tokens) == 0 {
+		return DecodedTokenLine{}
+	}
+	lineFormat := instrMap[string(tokens.Tokens[0].Value)].Format
+	instr := string(tokens.Tokens[0].Value)
+	for index, token := range tokens.Tokens {
+		if token.TokenType == COMMA {
+			tokens.Tokens = Delete(tokens.Tokens, index)
+		}
+	}
+
+	switch lineFormat {
+	case RTYPE:
+		return DecodedTokenLine{
+			Type:    RTYPE,
+			Instr:   instr,
+			Rd:      regMap[string(tokens.Tokens[1].Value)],
+			Rs1:     regMap[string(tokens.Tokens[2].Value)],
+			Rs2:     regMap[string(tokens.Tokens[3].Value)],
+			FilePos: tokens.FilePos,
+		}
+	}
+
+	return DecodedTokenLine{}
 }
