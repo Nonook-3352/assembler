@@ -1,11 +1,12 @@
 package main
 
 import (
-	"assembler/internal/rvcore"
 	"bufio"
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/Nonook-3352/assembler/internal/rvcore"
 )
 
 func main() {
