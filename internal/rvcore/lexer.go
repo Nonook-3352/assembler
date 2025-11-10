@@ -1,5 +1,7 @@
 package rvcore
 
+import "strings"
+
 var registerABI []string = []string{
 	"zero",           //x0
 	"ra",             //x1
@@ -98,23 +100,23 @@ func (line Line) LexeLine() TokenLine {
 
 }
 
-func (tokens TokenLine) RefineTokens() (error, TokenLine) {
+func (tokens TokenLine) RefineTokens() (TokenLine, error) {
 	for index := range tokens.Tokens {
 		token := &tokens.Tokens[index] //Actually modify the token and not just a copy of it.
 		switch token.TokenType {
 		case COMMA:
 			if index == len(tokens.Tokens)-1 {
-				return ParseError{
+				return TokenLine{}, ParseError{
 					Line:    tokens.FilePos,
 					Token:   uint(index),
 					Message: "Found no operand after a comma and reached end of line",
-				}, TokenLine{}
+				}
 			} else if tokens.Tokens[index+1].TokenType != OPERAND {
-				return ParseError{
+				return TokenLine{}, ParseError{
 					Line:    tokens.FilePos,
 					Token:   uint(index),
 					Message: "Found no operand after a comma",
-				}, TokenLine{}
+				}
 			}
 			token.OptionalType = UNDEFINED
 			//fmt.Printf("%+v (%d) passed\n", token, index)
@@ -146,21 +148,22 @@ func (tokens TokenLine) RefineTokens() (error, TokenLine) {
 			if token.Value == ".arch" {
 				if len(tokens.Tokens) > index+1 {
 					if tokens.Tokens[index+1].Value != "RISCV32I" {
-						return ParseError{
+						return TokenLine{}, ParseError{
 							Line:    tokens.FilePos,
 							Token:   uint(index + 1),
 							Message: "Only .arch RISCV32I is supported",
-						}, TokenLine{}
+						}
 					}
 				}
 			}
 		case INSTRUCTION:
 			token.OptionalType = UNDEFINED
+			token.Value = TokenValue(strings.ToLower(string(token.Value)))
 		default:
 			//fmt.Printf("%+v (%d) passed\n", token, index)
 		}
 
 	}
 
-	return nil, tokens
+	return tokens, nil
 }

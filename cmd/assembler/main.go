@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 func main() {
@@ -13,6 +14,7 @@ func main() {
 	if rvcore.Contains(os.Args, "--verbose") {
 		verbose = true
 	}
+	startTime := time.Now()
 	f, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
@@ -21,20 +23,24 @@ func main() {
 
 	scanner := bufio.NewScanner(f)
 	currentLine := 1
+	fmt.Println("Lexing started")
+
 	for scanner.Scan() {
 		tokens := rvcore.Line{Value: scanner.Text(), Len: uint16(len(scanner.Text())), FilePos: uint(currentLine)}.LexeLine()
-		err, tokens := tokens.RefineTokens()
+		tokens, err := tokens.RefineTokens()
+		output := tokens.EmitAsmLine()
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 		if verbose {
-			fmt.Printf("%+v\n", tokens)
+			fmt.Printf("Tokens: %+v\n", tokens)
+			fmt.Printf("Output: %032b\n\n", output)
 		}
 		currentLine++
 	}
 
-	fmt.Println("===Lexing complete===")
+	fmt.Printf("Lexing completed in %s", time.Since(startTime).String())
 
 	if err := scanner.Err(); err != nil {
 		panic(err)

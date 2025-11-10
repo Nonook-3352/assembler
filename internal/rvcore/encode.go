@@ -32,7 +32,7 @@ func EncodeSType(opcode, imm, funct3, rs1, rs2 uint32) uint32 {
 	return inst
 }
 
-func EncodeSBType(opcode, imm, funct3, rs1, rs2 uint32) uint32 {
+func EncodeBType(opcode, imm, funct3, rs1, rs2 uint32) uint32 {
 	var inst uint32
 	inst |= opcode
 	inst |= ((imm & 0b1000_0000_0000) >> 11) << 7 //imm[11]
@@ -54,7 +54,7 @@ func EncodeUType(opcode, rd, imm uint32) uint32 {
 	return inst
 }
 
-func EncodeUJType(opcode, rd, imm uint32) uint32 {
+func EncodeJType(opcode, rd, imm uint32) uint32 {
 	var inst uint32
 	inst |= opcode
 	inst |= rd << 7
