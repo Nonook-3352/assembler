@@ -9,6 +9,15 @@ type OptionalType uint8
 
 type InstrFormat uint8
 
+type (
+	OpcodeType uint32
+	RdType     uint32
+	Rs1Type    uint32
+	Rs2Type    uint32
+	ImmType    uint32
+	LabelType  uint32
+)
+
 //go:generate stringer -type=TokenType,OptionalType,InstrFormat
 const (
 	INSTRUCTION TokenType = iota

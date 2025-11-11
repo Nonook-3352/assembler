@@ -20,11 +20,32 @@ var registerABI []string = []string{
 	"t3", "t4", "t5", "t6", //x28-31
 }
 
+func DecodeOffset(t Token) (string, string) {
+	var imm string
+	var rs1 string
+	var rs1Beginning int
+	for index, value := range t.Value {
+
+		if value == '(' {
+			imm = string(t.Value)[:index]
+			rs1Beginning = index
+		} else if value == ')' {
+			rs1 = string(t.Value)[rs1Beginning+1 : index]
+		}
+
+	}
+
+	return rs1, imm
+}
+
 func Delete[T any](slice []T, index int) []T {
 	if len(slice) < index {
 		return slice
 	}
-
+	if len(slice) == index {
+		slice = slice[:index]
+		return slice
+	}
 	slice = append(slice[:index], slice[index+1:]...)
 	return slice
 }
@@ -190,6 +211,19 @@ func (tokens TokenLine) Decode() (DecodedTokenLine, error) {
 		if token.TokenType == COMMA {
 			tokens.Tokens = Delete(tokens.Tokens, index)
 		}
+
+		if token.TokenType == OPERAND {
+			rs1, imm := DecodeOffset(token)
+			if rs1 != "" && imm != "" {
+				tokens.Tokens = Delete(tokens.Tokens, index-1)
+				tokenslocal := TokenLine{Tokens: []Token{{TokenType: OPERAND, OptionalType: REGISTER, Value: TokenValue(rs1)}, {TokenType: OPERAND, OptionalType: UNDEFINED, Value: TokenValue(imm)}}, FilePos: 0}
+				tokenslocal, err := tokenslocal.RefineTokens()
+				if err != nil {
+					panic(err)
+				}
+				tokens.Tokens = append(tokens.Tokens, tokenslocal.Tokens[0], tokenslocal.Tokens[1])
+			}
+		}
 	}
 
 	switch lineFormat {
@@ -203,12 +237,21 @@ func (tokens TokenLine) Decode() (DecodedTokenLine, error) {
 			FilePos: tokens.FilePos,
 		}, nil
 	case ITYPE:
-		imm, err := strconv.ParseInt(string(tokens.Tokens[3].Value), 0, 0)
+		imm, err := strconv.ParseInt(string(tokens.Tokens[3].Value), 0, 0) //Should write my own
 		return DecodedTokenLine{
 			Type:  ITYPE,
 			Instr: instr,
 			Rd:    regMap[string(tokens.Tokens[1].Value)],
 			Rs1:   regMap[string(tokens.Tokens[2].Value)],
+			Imm:   uint32(imm),
+		}, err
+	case STYPE:
+		imm, err := strconv.ParseInt(string(tokens.Tokens[3].Value), 0, 0)
+		return DecodedTokenLine{
+			Type:  STYPE,
+			Instr: instr,
+			Rs1:   regMap[string(tokens.Tokens[1].Value)],
+			Rs2:   regMap[string(tokens.Tokens[2].Value)],
 			Imm:   uint32(imm),
 		}, err
 	}
